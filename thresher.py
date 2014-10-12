@@ -146,55 +146,61 @@ def thresh(input_file, output_file):
         logger.error('HINT: edit combine-example.cfg and save as combine.cfg.')
         return
 
+    parsers_list = dict(config.items('feeds.parsers'))
+
     logger.info('Loading raw feed data from %s' % input_file)
     with open(input_file, 'rb') as f:
         crop = json.load(f)
 
     harvest = []
     # TODO: replace with a proper plugin system (cf. #23)
-    thresher_map = {'blocklist.de': process_simple_list,
-                    'openbl': process_simple_list,
-                    'projecthoneypot': process_project_honeypot,
-                    'ciarmy': process_simple_list,
-                    'alienvault': process_alienvault,
-                    'rulez': process_rulez,
-                    'sans': process_sans,
-                    'http://www.nothink.org/blacklist/blacklist_ssh': process_simple_list,
-                    'http://www.nothink.org/blacklist/blacklist_malware': process_simple_list,
-                    'abuse.ch': process_simple_list,
-                    'packetmail': process_packetmail,
-                    'autoshun': process_autoshun,
-                    'the-haleys': process_haleys,
-                    'virbl': process_simple_list,
-                    'dragonresearchgroup': process_drg,
-                    'malwaregroup': process_malwaregroup,
-                    'malc0de': process_simple_list,
-                    'file://': process_simple_list}
+    #thresher_map = {'blocklist.de': process_simple_list,
+    #                'openbl': process_simple_list,
+    #                'projecthoneypot': process_project_honeypot,
+    #                'ciarmy': process_simple_list,
+    #                'alienvault': process_alienvault,
+    #                'rulez': process_rulez,
+    #                'sans': process_sans,
+    #                'http://www.nothink.org/blacklist/blacklist_ssh': process_simple_list,
+    #                'http://www.nothink.org/blacklist/blacklist_malware': process_simple_list,
+    #                'abuse.ch': process_simple_list,
+    #                'packetmail': process_packetmail,
+    #                'autoshun': process_autoshun,
+    #                'the-haleys': process_haleys,
+    #                'virbl': process_simple_list,
+    #                'dragonresearchgroup': process_drg,
+    #                'malwaregroup': process_malwaregroup,
+    #                'malc0de': process_simple_list,
+    #                'file://': process_simple_list}
 
     # When we have plugins, this hack won't be necessary
     for response in crop['inbound']:
         logger.info('Evaluating %s' % response[0])
         # TODO: logging
         if response[1] == 200:
-            for site in thresher_map:
-                if site in response[0]:
-                    logger.info('Parsing feed from %s' % response[0])
-                    harvest += thresher_map[site](response[2], response[0], 'inbound')
-                else:  # how to handle non-mapped sites?
+            for plabel, parser in parsers_list.iteritems():
+                if plabel == response[0]:
+                    logger.info('Parsing feed from %s with parser "%s"' % (response[0], parser))
+                    harvest += globals()[parser](response[2], response[0], 'inbound')
+                else: 
+                    logger.info('Parsing feed from %s with parser "process_simple_list"' % response[0])
+                    harvest += process_simple_list(response[2], response[0], 'inbound')
                     pass
         else:  # how to handle non-200 non-404?
             logger.error('Could not handle %s: %s' % (response[0], response[1]))
 
     for response in crop['outbound']:
         if response[1] == 200:
-            for site in thresher_map:
-                if site in response[0]:
-                    logger.info('Parsing feed from %s' % response[0])
-                    harvest += thresher_map[site](response[2], response[0], 'outbound')
-                else:  # how to handle non-mapped sites?
+            for plabel, parser in parsers_list.iteritems():
+                if plabel == response[0]:
+                    logger.info('Parsing feed from %s with parser "%s"' % (response[0], parser)) 
+                    harvest += globals()[parser](response[2], response[0], 'outbound')
+                else: 
+                    logger.info('Parsing feed from %s with parser "process_simple_list"' % response[0])
+                    harvest += process_simple_list(response[2], response[0], 'outbound')
                     pass
         else:  # how to handle non-200 non-404?
-            pass
+            logger.error('Could not handle %s: %s' % (response[0], response[1]))
 
     logger.info('Storing parsed data in %s' % output_file)
     with open(output_file, 'wb') as f:
