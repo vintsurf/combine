@@ -2,6 +2,9 @@ import csv
 import requests
 import re
 import datetime
+import grequests
+import time
+import StringIO
 
 def process_simple_list(response, source, direction):
     data = []
@@ -22,3 +25,39 @@ def indicator_type(indicator):
         return "FQDN"
     else:
         return None
+    
+def read_plain_text(response,mapping):
+    """ reads a plaintext file with a one indicator per line format """
+    data = []
+    for line in response.splitlines():
+        if not line.startswith('#') and not line.startswith('/') and not line.startswith('Export date') and len(line) > 0:
+            i = line.split()[0]
+            data.append({mapping[0]:i})
+    return data
+    
+def headless_xsv(response, mapping, delimiter=',',quotechar='"'):
+    """ reads a headless xsv"""
+    raw_data=[]
+    for row in csv.reader(StringIO.StringIO(response),delimiter=delimiter,quotechar=quotechar):
+        row_data={}
+#        print row
+        if len(mapping)==len(row):
+            for indx,val in enumerate(row):
+                row_data[mapping[indx]]=val
+            raw_data.append(row_data)
+        else:
+            print "can't parse: "+str(row)
+    return raw_data
+
+def headed_xsv(response, mapping, delimiter=","):
+    """ reads an xsv file with the given delimiter and reading the headers fromt the file"""
+    raw_data = []
+    for row in csv.DictReader(response,delimiter=delimiter):
+        raw_row={}
+        for col in row.keys():
+            if col in mapping.keys():
+                raw_row[mapping[col]]=row[col]
+            else:
+                raw_row[col]=row[col]
+        raw_data.append(raw_row)
+    return raw_data

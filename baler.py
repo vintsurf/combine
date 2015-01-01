@@ -71,15 +71,30 @@ def bale_reg_csvgz(harvest, output_file):
         bale_writer.writerows(harvest)
 
 
-def bale_reg_csv(harvest, output_file):
-    """ bale the data as a csv file"""
+def bale_csv(harvest, output_file):
+    """ bale the data as a csv file - should no longer need the enriched baler, as this should bale anything in the json"""
     logger.info('Output regular data as CSV to %s' % output_file)
     with open(output_file, 'wb') as csv_file:
         bale_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-
+        # setting a list of minimum headers expected - important for the final csv format
+        headers=['date','type','value','impact','confidence','description','campaign']
+        # going throught the harvest to get the rest of the headers - i could just update this earlier, but it will probably take the same amount of work
+        for row in harvest:
+            for key in row.keys():
+                if not key in headers:
+                    headers.append(key)
+        
         # header row
-        bale_writer.writerow(('entity', 'type', 'direction', 'source', 'notes', 'date'))
-        bale_writer.writerows(harvest)
+        bale_writer.writerow(headers)
+        for row in harvest:
+            csv_row=[]
+            for key in headers:
+                if key in row.keys():
+                    csv_row.append(row[key])
+                else:
+                    csv_row.append("")
+            bale_writer.writerow(csv_row)
+        #bale_writer.writerows(harvest)
 
 
 def bale_enr_csv(harvest, output_file):
@@ -207,7 +222,7 @@ def bale(input_file, output_file, output_format, is_regular):
 
     # TODO: also need plugins here (cf. #23)
     if is_regular:
-        format_funcs = {'csv': bale_reg_csv,'crits':bale_CRITs}
+        format_funcs = {'csv': bale_csv,'crits':bale_CRITs}
     else:
         format_funcs = {'csv': bale_enr_csv,'crits':bale_CRITs}
     format_funcs[output_format](harvest, output_file)

@@ -47,20 +47,22 @@ def thresh(input_file, output_file):
                     'file://': generic.process_simple_list}
 
     # When we have plugins, this hack won't be necessary
-    for response in crop['inbound']:
+    #for response in crop['inbound']:
+    for response in crop:
         logger.info('Evaluating %s' % response[0])
         # TODO: logging
         if response[1] == 200:
-            for site in thresher_map:
-                if site in response[0]:
-                    logger.info('Parsing feed from %s' % response[0])
-                    harvest += thresher_map[site](response[2], response[0], 'inbound')
-                else:  # how to handle non-mapped sites?
-                    pass
+            harvest+=globals()[response[0]].process(response[2])
+            #for site in thresher_map:
+                #if site in response[0]:
+                #    logger.info('Parsing feed from %s' % response[0])
+                #    harvest += thresher_map[site](response[2], response[0], 'inbound')
+                #else:  # how to handle non-mapped sites?
+                #    pass
         else:  # how to handle non-200 non-404?
             logger.error('Could not handle %s: %s' % (response[0], response[1]))
 
-    for response in crop['outbound']:
+    """for response in crop['outbound']:
         if response[1] == 200:
             for site in thresher_map:
                 if site in response[0]:
@@ -70,7 +72,7 @@ def thresh(input_file, output_file):
                     pass
         else:  # how to handle non-200 non-404?
             pass
-
+"""
     logger.info('Storing parsed data in %s' % output_file)
     with open(output_file, 'wb') as f:
         json.dump(harvest, f, indent=2)

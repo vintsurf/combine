@@ -9,4 +9,7 @@ __all__ = ["sans",
            "project_honeypot",
            "packetmail",
            "virbl",
-           "drg"]
+           "drg",
+           "zeustracker",
+           "nothink_malware_dns",
+           "malwaredomainslist"]
