@@ -1,6 +1,4 @@
 from yapsy.IPlugin import IPlugin
-import urllib2
-import json
 import datetime
 
 class PluginOne(IPlugin):
