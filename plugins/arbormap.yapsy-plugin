@@ -1,0 +1,9 @@
+[Core]
+Name = arbormap
+Module = arbormap
+
+[Documentation]   
+Author = vintsurf
+Version = 0.1
+Website = website for reference, yours or another one
+Description = what the plugin does
