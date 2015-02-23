@@ -19,11 +19,7 @@ class PluginOne(IPlugin):
 
     def process_data(self, source, response):
         data = []
-        #current_date = str(datetime.date.today())
-	    #response = urllib2.urlopen('http://www.gstatic.com/ddos-viz/attacks.json')
-        #response = urllib2.urlopen(URLS)
-        #response = self.URLS
-        #j = json.load(self.URLS)
+        current_date = str(datetime.date.today())
         for line in response.splitlines():   
            if 'subclass' in source:
                i = line.split()[0]
